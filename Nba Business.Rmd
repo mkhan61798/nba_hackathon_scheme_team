@@ -1,0 +1,34 @@
+---
+title: "NBABusiness"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plyr)
+```
+```{r}
+GameData = read.csv("/Users/malikkhan/Desktop/game_data.csv")
+PlayerData = read.csv("/Users/malikkhan/Desktop/player_data.csv")
+TrainingSet = read.csv("/Users/malikkhan/Desktop/training_set.csv")
+colnames(GameData)
+colnames(PlayerData)
+colnames(TrainingSet)
+CleanedSet <- data.frame(matrix(nrow = 2460, ncol = 13))
+CleanedNames <- c("game_id", "team_1", "team_2", "win_1", "win_2", "diff_1", "diff_2", "all_star1", "all_star2", "act_inact_1", "act_inact_2", "cum_final_score", "total_views")
+
+colnames(CleanedSet) <- as.factor(CleanedNames)
+
+CleanedSet[1:2460,1] <- c(unique(GameData[,"Game_ID"])) #2460 unique game ids i think!. So added those to first column
+which(CleanedSet[,] == GameData[,"Game_ID"])  #I would want this to return both but it only returns to me the first element/instance of the game id... so i thought i could refer to the second team by adding 1 to the element
+GameData[,]
+even_indexes<-seq(2,2460,2)
+odd_indexes<-seq(1,2459,2)
+GameData[odd_indexes,]
+CleanedSet[odd_indexes, "team_1"] <- GameData[odd_indexes,"Team"]
+```
+
