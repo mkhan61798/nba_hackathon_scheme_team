@@ -17,9 +17,12 @@ library(plyr)
 GameData = read.csv("/Users/malikkhan/Desktop/game_data.csv")
 PlayerData = read.csv("/Users/malikkhan/Desktop/player_data.csv")
 TrainingSet = read.csv("/Users/malikkhan/Desktop/training_set.csv")
+RevFaceTwit = read.csv("/Users/malikkhan/Desktop/NBAREVENUE.csv")
 
-CleanedSet <- data.frame(matrix(nrow = 2460, ncol = 8), stringsAsFactors = FALSE)
-CleanedNames <- c("game_id", "team_1", "team_2","win_1", "win_2", "total_active_stars", "cum_final_score", "total_views")
+RevFaceTwit$Team = as.character(RevFaceTwit$Team)
+
+CleanedSet <- data.frame(matrix(nrow = 2460, ncol = 12), stringsAsFactors = FALSE)
+CleanedNames <- c("game_id", "team_1", "team_2","win_1", "win_2", "total_active_stars", "cum_final_score", "total_views", "CombinedRevenues", "FBRatio", "TwitterRatio", "CombinedPPG")
 colnames(CleanedSet) <- as.factor(CleanedNames)
 CleanedSet[1:2460,1] <- c(unique(GameData[,"Game_ID"])) #2460 unique game ids 
 
@@ -30,12 +33,32 @@ for (i in 1:nrow(CleanedSet)){
   
   CleanedSet[i, "team_2"] = as.character(GameData$Team[elems[2]])
   
+  CleanedSet[i, "CombinedRevenues"] = RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_1"]), "Revenue"] + RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_2"]), "Revenue"]
+  
+  CleanedSet[i, "CombinedPPG"] = RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_1"]), "PPG"] + RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_2"]), "PPG"]
+  
+  FBFans = RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_1"]), "FB"] + RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_2"]), "FB"]
+  
+  FBRatio = FBFans/(RevFaceTwit[31, "FB"])
+  
+  CleanedSet[i, "FBRatio"] = FBRatio 
+  
+  TwitterFans = RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_1"]), "Twitter"] + RevFaceTwit[which(RevFaceTwit[,"Team"] == CleanedSet[i, "team_2"]), "Twitter"]
+  
+  TwitterRatio = TwitterFans/(RevFaceTwit[31, "Twitter"])
+  
+  CleanedSet[i, "TwitterRatio"] = TwitterRatio 
+  
   WhichAS1 = which(PlayerData$Game_ID == CleanedSet[i,"game_id"] & PlayerData$Team == CleanedSet[i,"team_1"])
+  
   WhichAS2 = which(PlayerData$Game_ID == CleanedSet[i,"game_id"] & PlayerData$Team == CleanedSet[i,"team_2"])
+  
   AS1 = sum(PlayerData$ASG_Team[WhichAS1] != "None")
+  
   AS2 = sum(PlayerData$ASG_Team[WhichAS2] != "None")
   
   InactiveAS1 = length(which(PlayerData$ASG_Team[WhichAS1] != "None" & PlayerData[WhichAS1,"Active_Status"] == "Inactive"))
+  
   InactiveAS2 = length(which(PlayerData$ASG_Team[WhichAS2] != "None" & PlayerData[WhichAS2,"Active_Status"] == "Inactive"))
   
   CleanedSet[i, "total_active_stars"] = (AS1-InactiveAS1) + (AS2-InactiveAS2)
@@ -54,12 +77,16 @@ for (i in 1:nrow(CleanedSet)){
   CleanedSet[i, "cum_final_score"] = GameData$Final_Score[elems[1]]+GameData$Final_Score[elems[2]] #cum score
 
   views = which(TrainingSet$Game_ID == CleanedSet[i, "game_id"]) #selected elems
+  
   total = sum(TrainingSet[views,"Rounded.Viewers"])
+  
   CleanedSet[i, "total_views"] = total
 }
 
 omitted = which(is.na(CleanedSet[,"cum_final_score"]))
 CleanedSet = CleanedSet[-omitted,]
 
+
 write.csv(CleanedSet, file = "cleaned_business_set.csv")
 ```
+
